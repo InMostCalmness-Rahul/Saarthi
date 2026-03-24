@@ -5,7 +5,7 @@ Saarthi is a relational AI companion prototype focused on two connected goals:
 - emotional support during life transitions
 - consistent progress through small, realistic actions
 
-This repository currently contains a frontend chat prototype (HTML, CSS, JavaScript).
+This repository currently contains a React frontend app scaffold for Phase 1 development.
 The long-term system direction is MERN + Python AI service.
 
 ## Current Prototype
@@ -19,9 +19,9 @@ The current frontend demonstrates:
 
 ## Tech Stack (Current)
 
-- HTML5
-- CSS3
-- Vanilla JavaScript
+- React
+- React Router
+- Vite
 
 ## Planned Architecture
 
@@ -34,9 +34,9 @@ The current frontend demonstrates:
 
 ```text
 Saarthi/
-  app.js
-  index.html
-  styles.css
+  frontend/
+    src/
+    package.json
   README.md
   LICENSE
   .gitignore
@@ -44,13 +44,13 @@ Saarthi/
 
 ## Run Locally
 
-Since this is a static frontend prototype:
+Frontend:
 
-1. Open `index.html` in your browser.
+1. Open the `frontend` directory in terminal.
+2. Install dependencies: `npm install`
+3. Run dev server: `npm run dev`
 
-Optional:
-
-1. Use VS Code Live Server extension for auto-reload.
+Note: If `npm` is not available on your machine, install Node.js first.
 
 ## Next Milestones
 
