@@ -11,6 +11,6 @@ const router = express.Router();
 // Chat endpoints
 router.post('/chat', validateChatMessage, postChat);
 router.post('/action-update', validateActionUpdate, postActionUpdate);
-router.get('/trust-score', getTrustScore);
+router.get('/trust-score/:userId', getTrustScore);
 
 export default router;

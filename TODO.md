@@ -19,23 +19,24 @@ This checklist is organized so you can build from prototype to MERN + Python AI 
 - [x] Create API endpoints:
   - [x] POST /api/chat
   - [x] POST /api/action-update
-  - [x] GET /api/trust-score
+  - [x] GET /api/trust-score/:userId
 - [x] Add request validation and consistent error responses
 - [x] Add API logging for debugging
 
 ## Phase 3: Python AI Service
 
-- [ ] Initialize FastAPI service
-- [ ] Create endpoint:
-  - [ ] POST /generate-response
-- [ ] Add structured response format:
-  - [ ] emotional_validation
-  - [ ] reconnection_nudge
-  - [ ] tiny_action
-  - [ ] followup_question
-  - [ ] risk_flags
-- [ ] Add prompt templates for trust phases
-- [ ] Add basic fallback when model/API fails
+- [x] Initialize FastAPI service
+- [x] Create endpoint:
+  - [x] POST /generate-response
+- [x] Add structured response format:
+  - [x] emotional_validation
+  - [x] reconnection_nudge
+  - [x] tiny_action
+  - [x] followup_question
+  - [x] risk_flags
+- [x] Add prompt templates for trust phases
+- [x] Add basic fallback when model/API fails
+- [x] Add OpenAI-compatible provider support (Groq/OpenAI via config)
 
 ## Phase 4: MongoDB Data Layer
 
@@ -51,16 +52,16 @@ This checklist is organized so you can build from prototype to MERN + Python AI 
 
 ## Phase 5: Integration
 
-- [ ] Connect React frontend to Express APIs
-- [ ] Connect Express backend to Python AI service
-- [ ] Map Python structured output into frontend chat messages
+- [x] Connect React frontend to Express APIs
+- [x] Connect Express backend to Python AI service
+- [x] Map Python structured output into frontend chat messages
 - [ ] Persist each interaction in MongoDB
 - [ ] Add end-to-end test flow for one full chat loop
 
 ## Phase 6: Safety and Ethics
 
 - [ ] Add clear disclaimer (not therapist, not emergency support)
-- [ ] Add crisis keyword detection and escalation message
+- [x] Add crisis keyword detection and escalation message
 - [ ] Add consent controls for proactive nudges
 - [ ] Add data privacy controls (export/delete data)
 - [ ] Add anti-dependency language guardrails in prompts
@@ -83,8 +84,8 @@ This checklist is organized so you can build from prototype to MERN + Python AI 
 
 ## Immediate Next 5 Tasks
 
-- [x] Convert current frontend into a React app
-- [ ] Set up Express server with /api/chat endpoint
-- [ ] Set up FastAPI /generate-response endpoint
-- [ ] Connect Express -> FastAPI call
-- [ ] Store one chat session in MongoDB
+- [ ] Add MongoDB connection and first model (User)
+- [ ] Persist chat/session/trust updates to MongoDB
+- [ ] Add end-to-end integration test for one chat roundtrip
+- [ ] Add provider config note in root README (Groq/OpenAI)
+- [ ] Add safety disclaimer in frontend chat UI

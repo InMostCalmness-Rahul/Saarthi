@@ -1,308 +1,218 @@
-# Saarthi
+# Saarthi - An AI Companion for Support and Growth
 
-Saarthi is a relational AI companion prototype focused on two connected goals:
+Saarthi is an empathetic AI companion that helps people during difficult times by combining emotional validation with small, achievable actions. Instead of big advice, Saarthi listens first, validates your feelings, and suggests one tiny step forward—reconnecting you with people who matter and building momentum through consistent progress.
 
-- emotional support during life transitions
-- consistent progress through small, realistic actions
+## How It Works
 
-## What's Built
+When you chat with Saarthi:
+1. **You share what's on your mind** - Your feelings, challenges, or what's weighing on you
+2. **Saarthi listens and validates** - Your emotions are acknowledged and validated
+3. **Small action suggested** - A concrete, 5-15 minute action you can take today
+4. **Progress tracked** - Your trust score reflects your journey through three phases:
+   - **Listening**: Building understanding and safety
+   - **Momentum**: Taking small actions forward
+   - **Accountability**: Sustaining progress through connections
 
-**Current Implementation**: A working React frontend with an Express.js backend API. The frontend demonstrates the full chat interface with trust score tracking, and the backend provides APIs for chat messages, action updates, and trust score management.
+## Quick Start - Run the Prototype
 
-### Frontend (Phase 1: Complete)
-- React chat application with multiple pages (Landing, Chat, Settings)
-- Reusable UI components: ChatWindow, MessageBubble, TrustCard, ChatInput
-- Trust score phases visualization (Listening, Momentum, Accountability)
-- Mock chat engine for local testing and development
-- Loading, error, and empty states
-- Responsive layout with CSS styling
+Saarthi consists of three services working together. Follow these steps to get everything running:
 
-### Backend (Phase 2: Complete)
-- Express.js API server with three core endpoints
-- Request validation and consistent error handling
-- HTTP logging via Morgan middleware
-- Environment configuration support (.env)
-- Mock in-memory data storage (ready for MongoDB integration)
+### Prerequisites
 
-## Current Architecture
+- **Node.js 18+** and **npm** (for frontend and backend)
+- **Python 3.8+** (for AI service)
+- **OpenAI API key** (free trial available at https://platform.openai.com/api-keys)
 
-The system is currently integrated locally:
-- **Frontend** (React) → connects to **Backend** (Express) 
-- **Backend** stores data in mock in-memory storage
-- AI responses are mock-generated (placeholder only)
-- Full end-to-end chat flow works with local data
+### Step 1: Clone and Navigate
 
-This architecture is designed to easily swap out the mock components in Phase 3+ with real services (Python AI, MongoDB).
+```bash
+# You should be in the Saarthi root directory
+cd Saarthi
+```
 
-## Project Structure
+### Step 2: Start the Backend (Express API)
+
+Open a new terminal:
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Backend will run at: **http://localhost:5000**
+
+### Step 3: Start the AI Service (Python FastAPI)
+
+Open another terminal:
+
+```bash
+cd ai_service
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+**Edit `.env` and add your OpenAI API key:**
+```
+OPENAI_API_KEY=sk-your-actual-key-here
+```
+
+Then start the service:
+```bash
+python main.py
+```
+
+AI Service will run at: **http://127.0.0.1:8000**
+
+### Step 4: Start the Frontend (React UI)
+
+Open a third terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend will open at: **http://localhost:5173**
+
+### Step 5: Test the Chat
+
+1. Open http://localhost:5173 in your browser
+2. Type a message like: "I'm feeling overwhelmed with work"
+3. Press Enter or click Send
+4. Watch Saarthi respond with validation, a tiny action, and a follow-up question
+
+**That's it!** The prototype is now running with real AI responses.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────┐
+│   Browser (http://localhost:5173)       │
+│         React Frontend                   │
+└────────────────┬────────────────────────┘
+                 │ HTTP requests
+                 ↓
+┌─────────────────────────────────────────┐
+│   http://localhost:5000                 │
+│     Express.js Backend API               │
+│  (routes, validation, orchestration)    │
+└────────────────┬────────────────────────┘
+                 │ HTTP calls
+                 ↓
+┌─────────────────────────────────────────┐
+│   http://127.0.0.1:8000                 │
+│      Python FastAPI AI Service          │
+│   (OpenAI integration, prompt logic)    │
+└─────────────────────────────────────────┘
+```
+
+## What's in Each Service
+
+### Frontend (React + Vite)
+- Chat interface where users type messages
+- Trust score panel showing progress
+- Three pages: Landing, Chat, Settings
+- Responsive, accessible design
+
+### Backend (Express.js)
+- Receives chat messages from frontend
+- Calls AI service to generate responses
+- Tracks trust scores and user sessions
+- Returns structured responses to frontend
+
+### AI Service (Python + FastAPI)
+- Integrates with OpenAI API (GPT-3.5-turbo)
+- Uses specialized prompts for different trust phases
+- Detects crisis indicators and responds appropriately
+- Returns structured JSON with validation, actions, questions
+
+## Troubleshooting
+
+### "Connection refused" when sending a message?
+- Make sure all three services are running
+- Check that backend (port 5000) and AI service (port 8000) are accessible
+- Look for errors in the respective terminal windows
+
+### "OPENAI_API_KEY not found"?
+- Did you create `.env` file in `ai_service/`?
+- Did you add your actual API key (starts with `sk-`)?
+- Restart the AI service after updating `.env`
+
+### Chat showing error message?
+- Open browser DevTools (F12) and check the Console tab for details
+- Verify the OpenAI API key is valid and has remaining credits  
+- Check that you're not hitting rate limits (add delays between messages)
+
+### Port already in use?
+Each service uses a specific port. If one is in use:
+- **Frontend (5173)**: Change in `frontend/vite.config.js`
+- **Backend (5000)**: Change in `backend/.env`
+- **AI Service (8000)**: Change in `ai_service/.env`
+
+## File Structure
 
 ```
 Saarthi/
-├── frontend/                  # React UI application (Phase 1: Complete)
+├── frontend/              # React chat interface
 │   ├── src/
-│   │   ├── components/       # ChatWindow, MessageBubble, TrustCard, ChatInput
-│   │   ├── pages/            # LandingPage, ChatPage, SettingsPage
-│   │   ├── data/             # mockChatEngine.js
+│   │   ├── components/   # UI components
+│   │   ├── pages/        # Chat, Landing, Settings pages
 │   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   └── styles.css
+│   │   └── main.jsx
 │   ├── package.json
-│   ├── vite.config.js
-│   └── index.html
-├── backend/                   # Express.js API (Phase 2: Complete)
-│   ├── controllers/          # chatController.js - route logic
-│   ├── middleware/           # errorHandler.js, validation.js
-│   ├── routes/               # chatRoutes.js - /api/chat, /api/action-update, /api/trust-score
+│   └── vite.config.js
+├── backend/              # Express API server
+│   ├── controllers/      # Request handlers
+│   ├── middleware/       # Validation, error handling
+│   ├── routes/           # API endpoints
 │   ├── server.js
-│   ├── package.json
-│   ├── .env.example
-│   └── README.md
-├── TODO.md                   # Roadmap: Phases 3-8
-└── README.md                 # This file
+│   └── package.json
+├── ai_service/           # Python AI service
+│   ├── main.py          # FastAPI app
+│   ├── ai_engine.py     # AI logic
+│   ├── prompts.py       # Prompt templates
+│   └── requirements.txt
+└── README.md            # This file
 ```
-
-## Tech Stack (Current)
-
-- **Frontend**: React 18, React Router, Vite, CSS
-- **Backend**: Node.js, Express.js, Morgan (HTTP logging), dotenv
-- **Middleware**: CORS, JSON parsing, request validation
-- **Data**: In-memory mock storage (objects)
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+ and npm
-
-### Running Backend
-
-1. Navigate to backend:
-   ```bash
-   cd backend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Copy environment template:
-   ```bash
-   cp .env.example .env
-   ```
-
-4. Optional: Update `.env` for custom settings:
-   ```
-   PORT=5000
-   NODE_ENV=development
-   ```
-
-5. Start development server (with auto-reload):
-   ```bash
-   npm run dev
-   ```
-
-6. Backend runs at `http://localhost:5000`
-
-### Running Frontend
-
-1. Navigate to frontend:
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start development server:
-   ```bash
-   npm run dev
-   ```
-
-4. Open browser at URL shown in terminal (usually `http://localhost:5173`)
-
-### Running Both Together
-
-Open two terminal windows:
-
-**Terminal 1 (Backend):**
-```bash
-cd backend && npm run dev
-```
-
-**Terminal 2 (Frontend):**
-```bash
-cd frontend && npm run dev
-```
-
-The frontend will automatically connect to the backend at `http://localhost:5000`. Test the full chat flow locally.
-
-## API Endpoints
-
-These endpoints are implemented and functional with mock data:
-
-### POST /api/chat
-Process a user message and return a bot response.
-
-**Request:**
-```json
-{
-  "message": "I'm feeling anxious",
-  "userId": "user123",
-  "sessionId": "session456"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "userMessage": {
-      "id": "msg_123",
-      "sender": "user",
-      "content": "I'm feeling anxious",
-      "timestamp": "2024-01-15T10:30:00Z"
-    },
-    "botResponse": {
-      "id": "msg_124",
-      "sender": "bot",
-      "content": "I hear you. Let's explore this together.",
-      "emotional_validation": "Your feelings matter.",
-      "tiny_action": "Take a deep breath",
-      "followup_question": "What do you think would help?",
-      "timestamp": "2024-01-15T10:30:01Z"
-    },
-    "sessionLength": 5,
-    "trustScore": 55
-  }
-}
-```
-
-### POST /api/action-update
-Record when a user completes an action and update trust score.
-
-**Request:**
-```json
-{
-  "userId": "user123",
-  "actionCommitment": "I will take a short walk today",
-  "trustScoreDelta": 5
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "userId": "user123",
-    "actionCommitment": "I will take a short walk today",
-    "trustScoreDelta": 5,
-    "newTrustScore": 55,
-    "updatedAt": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-### GET /api/trust-score
-Retrieve a user's current trust score.
-
-**Request:**
-```
-GET /api/trust-score?userId=user123
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "userId": "user123",
-    "trustScore": 55,
-    "sessionLength": 5,
-    "retrievedAt": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-## Backend Features (Current)
-
-### Request Validation
-- Validates required fields (`message`, `userId`, `actionCommitment`, `trustScoreDelta`)
-- Returns 400 status with clear error messages for invalid requests
-- Content-Type validation for JSON endpoints
-
-### Error Handling
-- Consistent JSON error response format
-- HTTP status codes: 400 (bad request), 404 (not found), 500 (server error)
-- Stack traces shown in development mode only
-- User-friendly error messages
-
-### Logging
-- Morgan middleware logs all HTTP requests with method, path, status
-- All errors logged to console
-- Timestamps on console output for debugging
-
-## Testing the Current State
-
-### Manual API Testing
-
-Using curl or Postman, test the backend directly:
-
-```bash
-# Test chat endpoint
-curl -X POST http://localhost:5000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "How are you helping me?",
-    "userId": "test_user_1",
-    "sessionId": "session_1"
-  }'
-
-# Test trust score endpoint
-curl "http://localhost:5000/api/trust-score?userId=test_user_1"
-```
-
-### Test the Frontend-Backend Connection
-
-1. Run both backend and frontend servers
-2. Open frontend in browser
-3. Type a message in the chat input
-4. Verify message appears and bot response returns
-5. Check browser DevTools Network tab to see API calls to `http://localhost:5000/api/chat`
-
-## Roadmap: Next Phases
-
-The next development phases are tracked in [TODO.md](TODO.md):
-
-- **Phase 3**: Python AI Service (FastAPI endpoint for response generation with structured output format)
-- **Phase 4**: MongoDB Data Layer (persistent user sessions, messages, and trust history)
-- **Phase 5**: Integration (connecting all services for end-to-end chat with real AI and persistence)
-- **Phase 6**: Safety & Ethics (crisis detection, disclaimers, consent controls)
-- **Phase 7**: Proactive Engagement (reminder nudges, inactivity detection)
-- **Phase 8**: Quality & Launch (unit tests, integration tests, CI/CD, documentation)
-
-See [TODO.md](TODO.md) for detailed checklists and specific tasks for each phase.
-
-## Development Notes
-
-### Mock Chat Engine
-The frontend uses `src/data/mockChatEngine.js` to generate responses during development. This simulates what the real AI service will do in Phase 3.
-
-### Mock Data Storage
-The backend stores messages, actions, and trust scores in plain JavaScript objects (in-memory). In Phase 4, this will be replaced with MongoDB queries.
-
-### Environment Variables
-Copy `.env.example` to `.env` to customize server port, environment (development/production), and URLs for services added in later phases.
 
 ## Contributing
 
-Pull requests are welcome. For large changes, open an issue first to discuss scope.
+We welcome contributions! Here's how to help:
 
-Code should remain readable for developers with basic software engineering knowledge.
+1. **Report Issues**: Found a bug or have an idea? Open an issue with clear details
+
+2. **Submit Code**: 
+   - Fork the repository
+   - Create a feature branch: `git checkout -b feature/your-feature-name`
+   - Make your changes
+   - Test locally with all three services running
+   - Commit with clear messages: `git commit -m "Add feature: clear description"`
+   - Push and open a pull request
+
+3. **Code Style**:
+   - Frontend: Keep components small and readable
+   - Backend: Follow Express conventions, add validation for all inputs
+   - Python: Follow PEP 8, add type hints where possible
+
+4. **Testing**:
+   - Manually test the chat flow end-to-end
+   - Try different message types (emotional, action-oriented, etc.)
+   - Test error scenarios (no internet, invalid API key, etc.)
+
+## API Endpoints
+
+### Frontend to Backend
+- `POST /api/chat` - Send message, get response
+- `GET /api/trust-score` - Get user's current trust score
+
+### Backend to AI Service
+- `POST /generate-response` - Get AI-generated response
+- `GET /health` - Check AI service is running
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file.
+This project is licensed under the MIT License. See the LICENSE file for details.
