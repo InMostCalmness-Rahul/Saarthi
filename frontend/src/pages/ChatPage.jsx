@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import ChatInput from "../components/ChatInput";
 import ChatWindow from "../components/ChatWindow";
 import TrustCard from "../components/TrustCard";
-import { generateBotMessage, getSeedMessages, getTrustScoreDelta } from "../data/mockChatEngine";
+import { getSeedMessages } from "../data/mockChatEngine";
 
 const MAX_TRUST = 100;
 const MIN_TRUST = 0;
+const BACKEND_URL = "http://localhost:5000";
 
 function clampTrust(score) {
   return Math.min(MAX_TRUST, Math.max(MIN_TRUST, score));
@@ -15,6 +16,8 @@ function ChatPage() {
   const [messages, setMessages] = useState(getSeedMessages);
   const [trustScore, setTrustScore] = useState(30);
   const [uiState, setUiState] = useState("ready");
+  const [userId] = useState(`user_${Date.now()}`);
+  const [sessionId] = useState(`session_${Date.now()}`);
 
   const uiDetails = useMemo(() => {
     if (uiState === "loading") {
@@ -62,20 +65,48 @@ function ChatPage() {
       text: userText,
     };
 
-    const trustDelta = getTrustScoreDelta(userText);
     setMessages((previous) => [...previous, newUserMessage]);
-    setTrustScore((previous) => clampTrust(previous + trustDelta));
 
-    window.setTimeout(() => {
-      const botMessage = {
-        id: `b-${Date.now()}`,
-        role: "bot",
-        text: generateBotMessage(userText),
-      };
+    // Call backend API
+    fetch(`${BACKEND_URL}/api/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: userText,
+        userId: userId,
+        sessionId: sessionId,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success && data.data.botResponse) {
+          const botMessage = {
+            id: `b-${Date.now()}`,
+            role: "bot",
+            text: data.data.botResponse.content,
+          };
 
-      setMessages((previous) => [...previous, botMessage]);
-      setUiState("ready");
-    }, 350);
+          setMessages((previous) => [...previous, botMessage]);
+          setTrustScore(clampTrust(data.data.trustScore));
+        } else {
+          throw new Error("Invalid response from backend");
+        }
+        setUiState("ready");
+      })
+      .catch((error) => {
+        console.error("Error communicating with backend:", error);
+        setUiState("error");
+        
+        // Add error message to chat
+        const errorMessage = {
+          id: `err-${Date.now()}`,
+          role: "bot",
+          text: "Sorry, I'm having trouble connecting. Please check if the backend is running at http://localhost:5000",
+        };
+        setMessages((previous) => [...previous, errorMessage]);
+      });
   }
 
   function handleReset() {

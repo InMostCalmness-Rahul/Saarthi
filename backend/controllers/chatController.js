@@ -31,7 +31,7 @@ export const postChat = async (req, res) => {
     const botResponse = {
       id: `msg_${Date.now() + 1}`,
       sender: 'bot',
-      content: `I hear you: "${message}". Let's explore this together.`,
+      content: `I hear you. Let's explore this together.`,
       emotional_validation: 'Your feelings matter.',
       reconnection_nudge: null,
       tiny_action: 'Take a deep breath',

@@ -14,6 +14,14 @@ function ChatInput({ onSend, disabled }) {
     setText("");
   }
 
+  function handleKeyDown(event) {
+    // Send on Enter, but allow Shift+Enter for new lines
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleSubmit(event);
+    }
+  }
+
   return (
     <form className="chat-input" onSubmit={handleSubmit}>
       <label htmlFor="chatMessage" className="sr-only">
@@ -25,6 +33,7 @@ function ChatInput({ onSend, disabled }) {
         placeholder="Share what is weighing on you..."
         value={text}
         onChange={(event) => setText(event.target.value)}
+        onKeyDown={handleKeyDown}
         disabled={disabled}
       />
       <button type="submit" disabled={disabled}>
