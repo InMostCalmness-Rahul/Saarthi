@@ -79,7 +79,7 @@ This checklist is organized so you can build from prototype to MERN + Python AI 
 - [ ] Add integration tests for API contracts
 - [ ] Add lint/format scripts for frontend, backend, and python service
 - [ ] Add CI workflow for test + lint checks
-- [ ] Improve README with setup steps for all services
+- [x] Improve README with setup steps for all services
 - [ ] Prepare pilot release checklist
 
 ## Immediate Next 5 Tasks

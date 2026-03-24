@@ -112,6 +112,12 @@ npm run test:e2e-chat
 
 **That's it!** The prototype is now running with persisted sessions, consent/privacy controls, and real AI responses.
 
+### Verification Snapshot
+
+- Last verified: 2026-03-24
+- Backend E2E flow: passed (`Chat endpoint OK`, `Trust score endpoint OK`, `Data export endpoint OK`)
+- Services expected up during check: frontend, backend, ai_service, MongoDB
+
 ## Architecture
 
 ```
