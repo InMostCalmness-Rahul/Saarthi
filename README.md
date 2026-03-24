@@ -2,6 +2,8 @@
 
 Saarthi is an empathetic AI companion that helps people during difficult times by combining emotional validation with small, achievable actions. Instead of big advice, Saarthi listens first, validates your feelings, and suggests one tiny step forward—reconnecting you with people who matter and building momentum through consistent progress.
 
+Safety note: Saarthi is not a therapist and not an emergency service. In immediate danger, contact local emergency services.
+
 ## How It Works
 
 When you chat with Saarthi:
@@ -20,8 +22,9 @@ Saarthi consists of three services working together. Follow these steps to get e
 ### Prerequisites
 
 - **Node.js 18+** and **npm** (for frontend and backend)
-- **Python 3.8+** (for AI service)
-- **OpenAI API key** (free trial available at https://platform.openai.com/api-keys)
+- **Python 3.10+** (for AI service)
+- **MongoDB** (local or cloud URI)
+- **LLM API key** (OpenAI or Groq)
 
 ### Step 1: Clone and Navigate
 
@@ -42,6 +45,14 @@ npm run dev
 
 Backend will run at: **http://localhost:5000**
 
+Create or update `backend/.env`:
+```
+PORT=5000
+NODE_ENV=development
+AI_SERVICE_URL=http://127.0.0.1:8000
+MONGODB_URI=mongodb://localhost:27017/saarthi
+```
+
 ### Step 3: Start the AI Service (Python FastAPI)
 
 Open another terminal:
@@ -54,9 +65,17 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-**Edit `.env` and add your OpenAI API key:**
+**Edit `.env` with provider config:**
 ```
-OPENAI_API_KEY=sk-your-actual-key-here
+# OpenAI option
+OPENAI_API_KEY=sk-your-openai-key
+API_BASE_URL=https://api.openai.com/v1
+MODEL=gpt-4o-mini
+
+# Groq option
+GROQ_API_KEY=gsk_your_groq_key
+API_BASE_URL=https://api.groq.com/openai/v1
+MODEL=llama-3.1-8b-instant
 ```
 
 Then start the service:
@@ -85,7 +104,13 @@ Frontend will open at: **http://localhost:5173**
 3. Press Enter or click Send
 4. Watch Saarthi respond with validation, a tiny action, and a follow-up question
 
-**That's it!** The prototype is now running with real AI responses.
+Optional backend E2E flow test:
+```bash
+cd backend
+npm run test:e2e-chat
+```
+
+**That's it!** The prototype is now running with persisted sessions, consent/privacy controls, and real AI responses.
 
 ## Architecture
 
@@ -99,14 +124,20 @@ Frontend will open at: **http://localhost:5173**
 ┌─────────────────────────────────────────┐
 │   http://localhost:5000                 │
 │     Express.js Backend API               │
-│  (routes, validation, orchestration)    │
+│(routes, validation, privacy, consent)   │
 └────────────────┬────────────────────────┘
                  │ HTTP calls
                  ↓
 ┌─────────────────────────────────────────┐
 │   http://127.0.0.1:8000                 │
 │      Python FastAPI AI Service          │
-│   (OpenAI integration, prompt logic)    │
+│ (OpenAI/Groq integration, prompt logic) │
+└────────────────┬────────────────────────┘
+                 │ persistence
+                 ↓
+┌─────────────────────────────────────────┐
+│              MongoDB                     │
+│   users, sessions, messages, trust      │
 └─────────────────────────────────────────┘
 ```
 
@@ -121,13 +152,15 @@ Frontend will open at: **http://localhost:5173**
 ### Backend (Express.js)
 - Receives chat messages from frontend
 - Calls AI service to generate responses
-- Tracks trust scores and user sessions
+- Persists trust scores, sessions, messages, and action commitments in MongoDB
+- Exposes consent and privacy controls (export/delete data)
 - Returns structured responses to frontend
 
 ### AI Service (Python + FastAPI)
-- Integrates with OpenAI API (GPT-3.5-turbo)
+- Integrates with OpenAI-compatible providers (OpenAI or Groq)
 - Uses specialized prompts for different trust phases
 - Detects crisis indicators and responds appropriately
+- Uses anti-dependency prompt guardrails
 - Returns structured JSON with validation, actions, questions
 
 ## Troubleshooting
@@ -137,9 +170,10 @@ Frontend will open at: **http://localhost:5173**
 - Check that backend (port 5000) and AI service (port 8000) are accessible
 - Look for errors in the respective terminal windows
 
-### "OPENAI_API_KEY not found"?
+### "API key not found"?
 - Did you create `.env` file in `ai_service/`?
-- Did you add your actual API key (starts with `sk-`)?
+- Did you add your actual provider key (`sk-` for OpenAI, `gsk_` for Groq)?
+- Is `API_BASE_URL` set to the correct provider endpoint?
 - Restart the AI service after updating `.env`
 
 ### Chat showing error message?
@@ -152,6 +186,10 @@ Each service uses a specific port. If one is in use:
 - **Frontend (5173)**: Change in `frontend/vite.config.js`
 - **Backend (5000)**: Change in `backend/.env`
 - **AI Service (8000)**: Change in `ai_service/.env`
+
+### Backend starts but chat fails immediately?
+- Ensure MongoDB is running and `MONGODB_URI` is valid in `backend/.env`
+- Check backend logs for connection errors
 
 ## File Structure
 
@@ -207,7 +245,12 @@ We welcome contributions! Here's how to help:
 
 ### Frontend to Backend
 - `POST /api/chat` - Send message, get response
-- `GET /api/trust-score` - Get user's current trust score
+- `POST /api/action-update` - Save action commitment and trust delta
+- `GET /api/trust-score/:userId` - Get user's current trust score
+- `GET /api/preferences/:userId` - Fetch consent preferences
+- `PUT /api/preferences/:userId` - Update consent preferences
+- `GET /api/user-data/:userId/export` - Export user data
+- `DELETE /api/user-data/:userId` - Delete user data
 
 ### Backend to AI Service
 - `POST /generate-response` - Get AI-generated response

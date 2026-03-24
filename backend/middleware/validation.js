@@ -81,3 +81,19 @@ export const validateActionUpdate = (req, res, next) => {
   
   next();
 };
+
+export const validatePreferencesUpdate = (req, res, next) => {
+  const { proactiveNudgesConsent } = req.body;
+
+  if (typeof proactiveNudgesConsent !== 'boolean') {
+    return res.status(400).json({
+      success: false,
+      error: {
+        status: 400,
+        message: 'proactiveNudgesConsent is required and must be a boolean'
+      }
+    });
+  }
+
+  next();
+};

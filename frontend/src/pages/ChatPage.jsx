@@ -3,6 +3,7 @@ import ChatInput from "../components/ChatInput";
 import ChatWindow from "../components/ChatWindow";
 import TrustCard from "../components/TrustCard";
 import { getSeedMessages } from "../data/mockChatEngine";
+import { getOrCreateUserId } from "../utils/userIdentity";
 
 const MAX_TRUST = 100;
 const MIN_TRUST = 0;
@@ -16,7 +17,7 @@ function ChatPage() {
   const [messages, setMessages] = useState(getSeedMessages);
   const [trustScore, setTrustScore] = useState(30);
   const [uiState, setUiState] = useState("ready");
-  const [userId] = useState(`user_${Date.now()}`);
+  const [userId] = useState(getOrCreateUserId);
   const [sessionId] = useState(`session_${Date.now()}`);
 
   const uiDetails = useMemo(() => {
@@ -127,6 +128,10 @@ function ChatPage() {
         <h2>Your bridge from feeling stuck to moving forward.</h2>
         <p>
           Talk openly. Get grounded. Reconnect with people and progress one small step at a time.
+        </p>
+        <p className="safety-note" role="note">
+          Saarthi is not a therapist or emergency service. If you are in immediate danger or thinking
+          about self-harm, contact local emergency services right away.
         </p>
         <TrustCard trustScore={trustScore} />
       </aside>

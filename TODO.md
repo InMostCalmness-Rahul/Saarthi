@@ -40,31 +40,31 @@ This checklist is organized so you can build from prototype to MERN + Python AI 
 
 ## Phase 4: MongoDB Data Layer
 
-- [ ] Create MongoDB connection setup
-- [ ] Define models:
-  - [ ] User
-  - [ ] Session
-  - [ ] Message
-  - [ ] ActionCommitment
-  - [ ] TrustHistory
-- [ ] Persist chat sessions and trust score changes
-- [ ] Add indexes for userId + createdAt queries
+- [x] Create MongoDB connection setup
+- [x] Define models:
+  - [x] User
+  - [x] Session
+  - [x] Message
+  - [x] ActionCommitment
+  - [x] TrustHistory
+- [x] Persist chat sessions and trust score changes
+- [x] Add indexes for userId + createdAt queries
 
 ## Phase 5: Integration
 
 - [x] Connect React frontend to Express APIs
 - [x] Connect Express backend to Python AI service
 - [x] Map Python structured output into frontend chat messages
-- [ ] Persist each interaction in MongoDB
-- [ ] Add end-to-end test flow for one full chat loop
+- [x] Persist each interaction in MongoDB
+- [x] Add end-to-end test flow for one full chat loop
 
 ## Phase 6: Safety and Ethics
 
-- [ ] Add clear disclaimer (not therapist, not emergency support)
+- [x] Add clear disclaimer (not therapist, not emergency support)
 - [x] Add crisis keyword detection and escalation message
-- [ ] Add consent controls for proactive nudges
-- [ ] Add data privacy controls (export/delete data)
-- [ ] Add anti-dependency language guardrails in prompts
+- [x] Add consent controls for proactive nudges
+- [x] Add data privacy controls (export/delete data)
+- [x] Add anti-dependency language guardrails in prompts
 
 ## Phase 7: Proactive Engagement
 
@@ -84,8 +84,8 @@ This checklist is organized so you can build from prototype to MERN + Python AI 
 
 ## Immediate Next 5 Tasks
 
-- [ ] Add MongoDB connection and first model (User)
-- [ ] Persist chat/session/trust updates to MongoDB
-- [ ] Add end-to-end integration test for one chat roundtrip
-- [ ] Add provider config note in root README (Groq/OpenAI)
-- [ ] Add safety disclaimer in frontend chat UI
+- [ ] Add inactivity detection logic for proactive engagement
+- [ ] Add scheduler for reminder nudges
+- [ ] Track nudge sent vs response rate
+- [ ] Add opt-out controls for reminders
+- [ ] Add API integration tests for contracts

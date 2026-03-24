@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:e2e-chat": "node scripts/e2eChatFlow.js"
   },
   "keywords": [
     "chatbot",
@@ -21,7 +22,8 @@
     "dotenv": "^16.3.1",
     "cors": "^2.8.5",
     "morgan": "^1.10.0",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "mongoose": "^8.12.1"
   },
   "devDependencies": {
     "eslint": "^8.54.0"

@@ -6,6 +6,7 @@ Ensure you have the following installed:
 - **Python** (3.8+) - Get it from https://www.python.org/
 - **npm** (comes with Node.js)
 - **pip** (Python package manager - usually comes with Python)
+- **MongoDB** (local instance or cloud URI)
 - An **LLM API Key** (OpenAI or Groq)
 
 ## Step 1: Configure Your LLM API Key
@@ -41,6 +42,16 @@ npm install
 ```
 
 This installs Express, axios, Morgan, CORS, and other Node packages.
+
+Also ensure backend `.env` includes a valid Mongo URI:
+
+```env
+PORT=5000
+NODE_ENV=development
+AI_SERVICE_URL=http://127.0.0.1:8000
+MONGODB_URI=mongodb://localhost:27017/saarthi
+LOG_LEVEL=info
+```
 
 ---
 
@@ -110,6 +121,19 @@ You should see: `Local: http://localhost:5173`
 
 ---
 
+## Step 7: Run End-to-End API Flow Test
+
+With backend + AI service running, run:
+
+```bash
+cd "c:\Users\rahul\OneDrive\Desktop\Project1\Saarthi\backend"
+npm run test:e2e-chat
+```
+
+Expected result: `E2E flow passed successfully`
+
+---
+
 ## How Data Flows Through the System
 
 ```
@@ -123,6 +147,8 @@ Configured LLM Provider (OpenAI or Groq)
     ↓ (Returns response)
 AI Service → Backend → Frontend
     ↓ (Updates chat & trust score)
+MongoDB stores sessions/messages/trust history
+    ↓
 User sees bot's empathetic response
 ```
 
@@ -140,10 +166,21 @@ User sees bot's empathetic response
 - Check that you see `Uvicorn running on http://127.0.0.1:8000`
 - Verify `OPENAI_API_KEY` is set correctly in `ai_service/.env`
 
+### **"MongoDB connection failed" in backend terminal**
+- Ensure MongoDB is running locally or cloud URI is reachable
+- Verify `MONGODB_URI` in `backend/.env`
+- Restart backend after env changes
+
 ### **"Invalid API key" error in AI service terminal**
 - Go to `ai_service/.env` and confirm the key for your provider is correct
 - OpenAI keys start with `sk-`; Groq keys start with `gsk_`
 - Also verify `API_BASE_URL` matches your provider
+
+### **Need to verify consent/privacy controls quickly?**
+- Go to Settings page in frontend
+- Toggle proactive reminders consent
+- Click Export My Data and check downloaded JSON
+- Click Delete My Data only if you want to permanently erase the test data
 
 ### **Chat doesn't send when pressing Enter**
 - Make sure you're using the latest code (we added Enter key support)
@@ -200,7 +237,7 @@ Saarthi/
 
 Once you confirm the system works:
 1. Customize AI prompts in `ai_service/prompts.py`
-2. Add database persistence (MongoDB setup in progress)
+2. Add proactive engagement scheduler (Phase 7)
 3. Deploy to production
 4. Gather user feedback and iterate
 
