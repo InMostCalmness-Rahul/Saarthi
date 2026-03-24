@@ -14,14 +14,14 @@ This checklist is organized so you can build from prototype to MERN + Python AI 
 
 ## Phase 2: Node/Express Backend (MERN)
 
-- [ ] Initialize backend folder and Express server
-- [ ] Add environment configuration and basic middleware
-- [ ] Create API endpoints:
-  - [ ] POST /api/chat
-  - [ ] POST /api/action-update
-  - [ ] GET /api/trust-score
-- [ ] Add request validation and consistent error responses
-- [ ] Add API logging for debugging
+- [x] Initialize backend folder and Express server
+- [x] Add environment configuration and basic middleware
+- [x] Create API endpoints:
+  - [x] POST /api/chat
+  - [x] POST /api/action-update
+  - [x] GET /api/trust-score
+- [x] Add request validation and consistent error responses
+- [x] Add API logging for debugging
 
 ## Phase 3: Python AI Service
 
