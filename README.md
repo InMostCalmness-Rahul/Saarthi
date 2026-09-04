@@ -67,15 +67,14 @@ cp .env.example .env
 
 **Edit `.env` with provider config:**
 ```
-# OpenAI option
-OPENAI_API_KEY=sk-your-openai-key
-API_BASE_URL=https://api.openai.com/v1
-MODEL=gpt-4o-mini
-
-# Groq option
+# Groq (required for this project)
 GROQ_API_KEY=gsk_your_groq_key
 API_BASE_URL=https://api.groq.com/openai/v1
 MODEL=llama-3.1-8b-instant
+
+# Notes
+# This project uses Groq as the single supported LLM provider. Remove any OpenAI keys from ai_service/.env.
+# Adjust MODEL and API_BASE_URL only if Groq publishes a new endpoint or model for your account.
 ```
 
 Then start the service:

@@ -59,7 +59,7 @@ export const postChat = async (req, res) => {
     // Call Python AI service to generate response
     const trustPhase = getTrustPhase(user.trustScore);
     
-    let aiResponse;
+    let aiRaw;
     try {
       const response = await axios.post(`${AI_SERVICE_URL}/generate-response`, {
         message: message,
@@ -68,16 +68,16 @@ export const postChat = async (req, res) => {
       }, {
         timeout: 10000 // 10 second timeout
       });
-      
-      if (response.data.success) {
-        aiResponse = response.data.data;
+
+      if (response.data && response.data.success) {
+        aiRaw = response.data.data;
       } else {
-        throw new Error('AI service returned error: ' + response.data.error);
+        throw new Error('AI service returned error: ' + (response.data?.error || 'unknown'));
       }
     } catch (aiError) {
       console.error('Error calling AI service:', aiError.message);
       // Fallback response if AI service fails
-      aiResponse = {
+      aiRaw = {
         emotional_validation: 'I hear you, and I\'m here to listen.',
         reconnection_nudge: null,
         tiny_action: 'Take a moment to breathe - you\'re doing the right thing by reaching out.',
@@ -86,8 +86,60 @@ export const postChat = async (req, res) => {
         content: 'I hear you, and I\'m here to listen.\n\nTake a moment to breathe - you\'re doing the right thing by reaching out.\n\nWhat feels most important to focus on right now?'
       };
     }
-    
-    // Create bot response message
+
+    // Normalise AI response into object form (support natural-string responses)
+    function _firstSentence(text) {
+      if (!text) return null;
+      const nl = text.split('\n')[0].trim();
+      const match = nl.match(/.*?[\.!\?](\s|$)/);
+      if (match) return match[0].trim();
+      return nl.slice(0, 200);
+    }
+
+    function _trailingQuestion(text) {
+      if (!text) return null;
+      const qMatch = text.match(/([^\n\r\?]{5,}\?)(?![\s\S]*\?)/);
+      if (qMatch) return qMatch[1].trim();
+      // fallback: any question mark chunk
+      const allQ = text.match(/[^\n\r\?]{5,}\?/g);
+      if (allQ && allQ.length) return allQ[allQ.length - 1].trim();
+      return null;
+    }
+
+    let aiResponse;
+    if (typeof aiRaw === 'string') {
+      aiResponse = {
+        content: aiRaw,
+        emotional_validation: _firstSentence(aiRaw) || 'I hear you, and I\'m here to listen.',
+        reconnection_nudge: null,
+        tiny_action: null,
+        followup_question: _trailingQuestion(aiRaw),
+        risk_flags: []
+      };
+    } else if (aiRaw && typeof aiRaw === 'object') {
+      const contentText = aiRaw.content || (aiRaw.text || '').toString();
+      aiResponse = {
+        content: contentText || JSON.stringify(aiRaw),
+        emotional_validation: aiRaw.emotional_validation || _firstSentence(contentText) || 'I hear you, and I\'m here to listen.',
+        reconnection_nudge: aiRaw.reconnection_nudge || null,
+        tiny_action: aiRaw.tiny_action || null,
+        followup_question: aiRaw.followup_question || _trailingQuestion(contentText),
+        risk_flags: aiRaw.risk_flags || []
+      };
+    } else {
+      // unexpected form — coerce to string
+      const text = String(aiRaw);
+      aiResponse = {
+        content: text,
+        emotional_validation: _firstSentence(text) || 'I hear you, and I\'m here to listen.',
+        reconnection_nudge: null,
+        tiny_action: null,
+        followup_question: _trailingQuestion(text),
+        risk_flags: []
+      };
+    }
+
+    // Create bot response message (store the natural content and any heuristics)
     const botMsgId = `msg_${Date.now() + 1}`;
     const botMessageDoc = await Message.create({
       messageId: botMsgId,
@@ -114,9 +166,10 @@ export const postChat = async (req, res) => {
       risk_flags: botMessageDoc.risk_flags || [],
       timestamp: botMessageDoc.sentAt.toISOString(),
     };
-    
-    // Update trust score based on response
-    const trustDelta = aiResponse.risk_flags?.includes('CRISIS_DETECTED') ? -5 : 2;
+
+    // Update trust score based on response. Default positive delta for supportive replies, negative for crisis.
+    let trustDelta = (aiResponse.risk_flags || []).includes('CRISIS_DETECTED') ? -10 : 3;
+    if (aiResponse.tiny_action) trustDelta += 2; // slightly more convincing when offering a helpful tiny action
     const previousScore = user.trustScore;
     const newTrustScore = Math.max(0, Math.min(100, previousScore + trustDelta));
     user.trustScore = newTrustScore;
