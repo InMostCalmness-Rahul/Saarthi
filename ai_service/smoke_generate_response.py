@@ -17,12 +17,18 @@ def main():
     try:
         resp = requests.post(f"{AI_URL}/generate-response", json=payload, timeout=10)
         print("Status:", resp.status_code)
+        resp.raise_for_status()
         try:
-            print("JSON:\n", resp.json())
-        except Exception:
+            body = resp.json()
+        except ValueError:
             print("Raw:\n", resp.text)
-    except Exception as e:
+            raise RuntimeError("AI service returned a non-JSON response")
+        print("JSON:\n", body)
+        if not isinstance(body, dict) or body.get("success") is not True:
+            raise RuntimeError("AI service response did not report success")
+    except (requests.RequestException, RuntimeError) as e:
         print("Error calling AI service:", e)
+        raise SystemExit(1) from e
 
 
 if __name__ == '__main__':

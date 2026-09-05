@@ -9,6 +9,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     strategy:
       matrix:
         node-version: ["18.x"]
@@ -20,6 +30,7 @@ jobs:
       GROQ_API_BASE_URL: ${{ secrets.GROQ_API_BASE_URL }}
       GROQ_MODEL: ${{ secrets.GROQ_MODEL }}
       GROQ_TEMPERATURE: ${{ secrets.GROQ_TEMPERATURE }}
+      MONGODB_URI: mongodb://127.0.0.1:27017/saarthi
 
     steps:
       - name: Checkout
@@ -65,22 +76,34 @@ jobs:
         run: |
           set -e
           echo "Waiting for AI service (http://127.0.0.1:8000) to be ready..."
+          ai_ready=false
           for i in {1..30}; do
             if curl -sSf http://127.0.0.1:8000/health >/dev/null 2>&1 || curl -sSf http://127.0.0.1:8000/ >/dev/null 2>&1; then
               echo "AI service is up"
+              ai_ready=true
               break
             fi
             echo -n '.'; sleep 1
           done
+          if [ "$ai_ready" != "true" ]; then
+            echo "AI service did not become ready"
+            exit 1
+          fi
 
           echo "Waiting for Backend (http://127.0.0.1:5000) to be ready..."
+          backend_ready=false
           for i in {1..30}; do
             if curl -sSf http://127.0.0.1:5000/health >/dev/null 2>&1 || curl -sSf http://127.0.0.1:5000/ >/dev/null 2>&1; then
               echo "Backend is up"
+              backend_ready=true
               break
             fi
             echo -n '.'; sleep 1
           done
+          if [ "$backend_ready" != "true" ]; then
+            echo "Backend did not become ready"
+            exit 1
+          fi
 
       - name: Run backend smoke test
         env:
@@ -92,27 +115,34 @@ jobs:
         env:
           AI_SERVICE_URL: http://127.0.0.1:8000
         run: |
-          python ai_service/smoke_generate_response.py
+          ai_service/venv/bin/python ai_service/smoke_generate_response.py
+
+      - name: Install frontend deps and build
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
 
       - name: Lint (backend)
         working-directory: ./backend
         run: |
-          if [ -f package.json ]; then
-            if npm run | grep -q lint; then
-              npm run lint || true
-            fi
+          if [ -f eslint.config.js ] || [ -f eslint.config.mjs ] || [ -f .eslintrc ] || [ -f .eslintrc.json ] || [ -f .eslintrc.js ]; then
+            npm run lint
+          else
+            echo "Backend lint skipped: no ESLint configuration is present."
           fi
 
       - name: Lint (frontend)
         working-directory: ./frontend
         run: |
-          if [ -f package.json ]; then
-            if npm run | grep -q lint; then
-              npm run lint || true
-            fi
+          if [ -f eslint.config.js ] || [ -f eslint.config.mjs ] || [ -f .eslintrc ] || [ -f .eslintrc.json ] || [ -f .eslintrc.js ]; then
+            npm run lint
+          else
+            echo "Frontend lint skipped: no ESLint configuration is present."
           fi
 
       - name: Collect logs and Summary
+        if: always()
         run: |
           echo "CI smoke tests completed. Collecting service logs..."
           echo "---- ai_service log ----"

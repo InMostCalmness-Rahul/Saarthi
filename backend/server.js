@@ -18,6 +18,10 @@ app.use(cors());
 app.use(express.json());
 app.use(requestValidator);
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy', service: 'Saarthi backend' });
+});
+
 // Routes
 app.use('/api', chatRoutes);
 

@@ -16,11 +16,15 @@ async function main(){
     const resp = await axios.post(`${BACKEND_URL}/api/chat`, payload, { timeout: 10000 });
     console.log('Status:', resp.status);
     console.log('Body:', JSON.stringify(resp.data, null, 2));
+    if (resp.status < 200 || resp.status >= 300 || resp.data?.success === false) {
+      throw new Error('Backend smoke test returned an unsuccessful response');
+    }
   }catch(err){
     console.error('Error calling backend:', err.message);
     if(err.response){
       console.error('Response data:', err.response.data);
     }
+    process.exitCode = 1;
   }
 }
 
