@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+        python-version: [3.10]
+
+    env:
+      # Provide your Groq key and optional overrides via GitHub Secrets
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      GROQ_API_BASE_URL: ${{ secrets.GROQ_API_BASE_URL }}
+      GROQ_MODEL: ${{ secrets.GROQ_MODEL }}
+      GROQ_TEMPERATURE: ${{ secrets.GROQ_TEMPERATURE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install backend deps
+        working-directory: ./backend
+        run: |
+          npm ci
+
+      - name: Install ai_service deps and create venv
+        working-directory: ./ai_service
+        run: |
+          python -m venv venv
+          . venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start ai_service (uvicorn) in background
+        working-directory: ./ai_service
+        run: |
+          . venv/bin/activate
+          nohup python -m uvicorn main:app --host 127.0.0.1 --port 8000 --log-level info > ai_service.log 2>&1 &
+          sleep 1
+
+      - name: Start backend (npm) in background
+        working-directory: ./backend
+        run: |
+          npm run dev > backend.log 2>&1 &
+          sleep 1
+
+      - name: Wait for services to become available
+        run: |
+          set -e
+          echo "Waiting for AI service (http://127.0.0.1:8000) to be ready..."
+          for i in {1..30}; do
+            if curl -sSf http://127.0.0.1:8000/health >/dev/null 2>&1 || curl -sSf http://127.0.0.1:8000/ >/dev/null 2>&1; then
+              echo "AI service is up"
+              break
+            fi
+            echo -n '.'; sleep 1
+          done
+
+          echo "Waiting for Backend (http://127.0.0.1:5000) to be ready..."
+          for i in {1..30}; do
+            if curl -sSf http://127.0.0.1:5000/health >/dev/null 2>&1 || curl -sSf http://127.0.0.1:5000/ >/dev/null 2>&1; then
+              echo "Backend is up"
+              break
+            fi
+            echo -n '.'; sleep 1
+          done
+
+      - name: Run backend smoke test
+        env:
+          BACKEND_URL: http://127.0.0.1:5000
+        run: |
+          node backend/smoke_chat_test.js
+
+      - name: Run ai_service smoke test
+        env:
+          AI_SERVICE_URL: http://127.0.0.1:8000
+        run: |
+          python ai_service/smoke_generate_response.py
+
+      - name: Lint (backend)
+        working-directory: ./backend
+        run: |
+          if [ -f package.json ]; then
+            if npm run | grep -q lint; then
+              npm run lint || true
+            fi
+          fi
+
+      - name: Lint (frontend)
+        working-directory: ./frontend
+        run: |
+          if [ -f package.json ]; then
+            if npm run | grep -q lint; then
+              npm run lint || true
+            fi
+          fi
+
+      - name: Collect logs and Summary
+        run: |
+          echo "CI smoke tests completed. Collecting service logs..."
+          echo "---- ai_service log ----"
+          if [ -f ai_service/ai_service.log ]; then tail -n +1 ai_service/ai_service.log || true; fi
+          if [ -f ai_service/ai_service.log ]; then echo "(ai_service log shown above)"; fi
+          echo "---- backend log (last 200 lines) ----"
+          tail -n 200 backend/backend.log || true
+          echo "Done." 

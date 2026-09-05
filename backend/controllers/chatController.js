@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { randomUUID } from 'node:crypto';
 import User from '../models/User.js';
 import Session from '../models/Session.js';
 import Message from '../models/Message.js';
@@ -39,7 +40,7 @@ export const postChat = async (req, res) => {
     );
     
     // Store user message
-    const userMsgId = `msg_${Date.now()}`;
+    const userMsgId = `msg_${randomUUID()}`;
     const userMessageDoc = await Message.create({
       messageId: userMsgId,
       sessionId: safeSessionId,
@@ -140,7 +141,7 @@ export const postChat = async (req, res) => {
     }
 
     // Create bot response message (store the natural content and any heuristics)
-    const botMsgId = `msg_${Date.now() + 1}`;
+    const botMsgId = `msg_${randomUUID()}`;
     const botMessageDoc = await Message.create({
       messageId: botMsgId,
       sessionId: safeSessionId,

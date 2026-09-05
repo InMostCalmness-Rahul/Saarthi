@@ -24,7 +24,7 @@ Saarthi consists of three services working together. Follow these steps to get e
 - **Node.js 18+** and **npm** (for frontend and backend)
 - **Python 3.10+** (for AI service)
 - **MongoDB** (local or cloud URI)
-- **LLM API key** (OpenAI or Groq)
+- **LLM API key** (Groq)
 
 ### Step 1: Clone and Navigate
 
@@ -70,12 +70,14 @@ cp .env.example .env
 # Groq (required for this project)
 GROQ_API_KEY=gsk_your_groq_key
 API_BASE_URL=https://api.groq.com/openai/v1
-MODEL=llama-3.1-8b-instant
+MODEL=openai/gpt-oss-20b
 
 # Notes
 # This project uses Groq as the single supported LLM provider. Remove any OpenAI keys from ai_service/.env.
 # Adjust MODEL and API_BASE_URL only if Groq publishes a new endpoint or model for your account.
 ```
+
+**CI note:** To enable real Groq calls in the CI workflow, add the repository secret `GROQ_API_KEY` (and optionally `GROQ_API_BASE_URL`, `GROQ_MODEL`, `GROQ_TEMPERATURE`) at: `Settings → Secrets → Actions` in your GitHub repository. The CI job reads these secrets and will run the ai_service against Groq when present.
 
 Then start the service:
 ```bash
@@ -136,7 +138,7 @@ npm run test:e2e-chat
 ┌─────────────────────────────────────────┐
 │   http://127.0.0.1:8000                 │
 │      Python FastAPI AI Service          │
-│ (OpenAI/Groq integration, prompt logic) │
+│ (Groq integration, prompt logic) │
 └────────────────┬────────────────────────┘
                  │ persistence
                  ↓
@@ -162,7 +164,7 @@ npm run test:e2e-chat
 - Returns structured responses to frontend
 
 ### AI Service (Python + FastAPI)
-- Integrates with OpenAI-compatible providers (OpenAI or Groq)
+- Integrates with the Groq LLM provider
 - Uses specialized prompts for different trust phases
 - Detects crisis indicators and responds appropriately
 - Uses anti-dependency prompt guardrails
@@ -177,13 +179,13 @@ npm run test:e2e-chat
 
 ### "API key not found"?
 - Did you create `.env` file in `ai_service/`?
-- Did you add your actual provider key (`sk-` for OpenAI, `gsk_` for Groq)?
+- Did you add your Groq provider key (`gsk_`)?
 - Is `API_BASE_URL` set to the correct provider endpoint?
 - Restart the AI service after updating `.env`
 
 ### Chat showing error message?
 - Open browser DevTools (F12) and check the Console tab for details
-- Verify the OpenAI API key is valid and has remaining credits  
+- Verify the Groq API key is valid and has remaining credits  
 - Check that you're not hitting rate limits (add delays between messages)
 
 ### Port already in use?

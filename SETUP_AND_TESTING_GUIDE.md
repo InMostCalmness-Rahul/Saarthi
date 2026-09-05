@@ -7,26 +7,23 @@ Ensure you have the following installed:
 - **npm** (comes with Node.js)
 - **pip** (Python package manager - usually comes with Python)
 - **MongoDB** (local instance or cloud URI)
-- An **LLM API Key** (OpenAI or Groq)
+- An **LLM API Key** (Groq - required)
 
 ## Step 1: Configure Your LLM API Key
 
-**Before you start:** You MUST add a valid API key to the AI service:
+**Before you start:** You MUST add a valid Groq API key to the AI service:
 
 1. Open this file: `ai_service/.env`
-2. Use one of these options:
+2. Add the following values (example):
    ```
-    # Option A: OpenAI
-    OPENAI_API_KEY=sk-your-openai-key
-    API_BASE_URL=https://api.openai.com/v1
-    MODEL=gpt-4o-mini
-
-    # Option B: Groq (OpenAI-compatible)
     GROQ_API_KEY=gsk_your_groq_key
     API_BASE_URL=https://api.groq.com/openai/v1
-    MODEL=llama-3.1-8b-instant
+    MODEL=openai/gpt-oss-20b
+    TEMPERATURE=0.85
    ```
 3. Save the file
+
+**CI note:** If you want the GitHub Actions CI to call Groq for real responses, add a repository secret named `GROQ_API_KEY` (and optionally `GROQ_API_BASE_URL`, `GROQ_MODEL`, `GROQ_TEMPERATURE`) at: Settings → Secrets → Actions. The CI workflow reads these secrets and uses them when present.
 
 Without this step, the AI service will return fallback responses.
 
@@ -77,7 +74,7 @@ cd "c:\Users\rahul\OneDrive\Desktop\Project1\Saarthi\ai_service"
 pip install -r requirements.txt
 ```
 
-This installs FastAPI, Pydantic, uvicorn, OpenAI client, and other Python packages.
+This installs FastAPI, Pydantic, uvicorn, requests (used for Groq HTTP calls), and other Python packages.
 
 ---
 
@@ -142,8 +139,8 @@ Frontend (React)
 Backend (Express)
     ↓ (Calls AI service)
 AI Service (Python FastAPI)
-    ↓ (Calls OpenAI API)
-Configured LLM Provider (OpenAI or Groq)
+    ↓ (Calls Groq API)
+Configured LLM Provider (Groq)
     ↓ (Returns response)
 AI Service → Backend → Frontend
     ↓ (Updates chat & trust score)
@@ -164,7 +161,7 @@ User sees bot's empathetic response
 ### **"Error calling AI service" in backend terminal**
 - Make sure Terminal 2 (AI service) is running
 - Check that you see `Uvicorn running on http://127.0.0.1:8000`
-- Verify `OPENAI_API_KEY` is set correctly in `ai_service/.env`
+- Verify `GROQ_API_KEY` is set correctly in `ai_service/.env`
 
 ### **"MongoDB connection failed" in backend terminal**
 - Ensure MongoDB is running locally or cloud URI is reachable
@@ -173,7 +170,7 @@ User sees bot's empathetic response
 
 ### **"Invalid API key" error in AI service terminal**
 - Go to `ai_service/.env` and confirm the key for your provider is correct
-- OpenAI keys start with `sk-`; Groq keys start with `gsk_`
+- Groq keys start with `gsk_`
 - Also verify `API_BASE_URL` matches your provider
 
 ### **Need to verify consent/privacy controls quickly?**
@@ -222,7 +219,7 @@ Saarthi/
 │
 ├── ai_service/            # Python FastAPI
 │   ├── main.py            # Receives requests from backend
-│   ├── ai_engine.py       # Calls OpenAI-compatible API (OpenAI or Groq)
+│   ├── ai_engine.py       # Calls Groq-compatible API (Groq)
 │   ├── config.py          # Settings management
 │   ├── prompts.py         # AI response templates
 │   ├── .env               # LLM provider key/config goes here
