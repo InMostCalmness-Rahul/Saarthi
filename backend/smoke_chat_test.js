@@ -2,7 +2,7 @@
 // Run this after starting backend and ai_service (and MongoDB if persistence is required)
 // node smoke_chat_test.js
 
-const axios = require('axios');
+import axios from 'axios';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:5000';
 
