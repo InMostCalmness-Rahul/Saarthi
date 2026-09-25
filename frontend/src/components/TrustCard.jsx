@@ -1,26 +1,20 @@
-function TrustCard({ trustScore }) {
-  let phaseName = "Listening Mode";
-  let phaseHint = "I am focused on understanding what you are feeling without pushing too fast.";
+import { clampTrustScore, getPhaseDetails } from "../utils/trustPhase";
 
-  if (trustScore >= 40 && trustScore <= 69) {
-    phaseName = "Momentum Mode";
-    phaseHint = "I will keep validating feelings while guiding one small next step.";
-  }
-
-  if (trustScore >= 70) {
-    phaseName = "Accountability Mode";
-    phaseHint = "I can now offer more direct pattern feedback with empathy.";
-  }
+function TrustCard({ trustScore, phase }) {
+  const score = clampTrustScore(trustScore);
+  // The server-reported phase is authoritative when available; otherwise the
+  // shared threshold helper keeps the UI aligned with backend/constants.js.
+  const details = getPhaseDetails(score, phase);
 
   return (
     <aside className="trust-card">
       <p className="label">Trust Phase</p>
-      <h2>{phaseName}</h2>
-      <p className="hint">{phaseHint}</p>
-      <div className="meter" role="progressbar" aria-valuenow={trustScore} aria-valuemin={0} aria-valuemax={100}>
-        <span style={{ width: `${trustScore}%` }} />
+      <h2>{details.name}</h2>
+      <p className="hint">{details.hint}</p>
+      <div className="meter" role="progressbar" aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}>
+        <span style={{ width: `${score}%` }} />
       </div>
-      <p className="score">{trustScore}/100</p>
+      <p className="score">{score}/100</p>
     </aside>
   );
 }

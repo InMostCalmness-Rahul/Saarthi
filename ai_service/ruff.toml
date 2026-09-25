@@ -1,0 +1,9 @@
+# Ruff configuration for the AI service (lint only; formatting is not enforced).
+line-length = 120
+target-version = "py310"
+
+[lint]
+# Pyflakes + pycodestyle correctness rules. E501 (line length) is excluded because
+# the prompt templates intentionally contain long prose lines.
+select = ["E", "F", "W"]
+ignore = ["E501"]

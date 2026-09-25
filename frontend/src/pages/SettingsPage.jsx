@@ -1,29 +1,39 @@
 import { useEffect, useState } from "react";
-import { getOrCreateUserId } from "../utils/userIdentity";
-
-const BACKEND_URL = "http://localhost:5000";
+import { apiRequest } from "../utils/apiClient";
+import { clearSession, ensureSession, withSession } from "../utils/session";
 
 function SettingsPage() {
-  const [userId] = useState(getOrCreateUserId);
+  const [session, setSession] = useState(null);
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadPreferences() {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/preferences/${userId}`);
-        const result = await response.json();
-        if (result.success) {
-          setConsent(Boolean(result.data.proactiveNudgesConsent));
+        const activeSession = await ensureSession();
+        const preferences = await apiRequest("/api/preferences", { token: activeSession.token });
+        if (cancelled) {
+          return;
         }
+        setSession(activeSession);
+        setConsent(Boolean(preferences.proactiveNudgesConsent));
       } catch (error) {
-        console.error("Failed to load preferences", error);
+        if (cancelled) {
+          return;
+        }
+        setStatus("error");
+        setMessage(error.message);
       }
     }
 
     loadPreferences();
-  }, [userId]);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleConsentChange(event) {
     const nextValue = event.target.checked;
@@ -32,25 +42,21 @@ function SettingsPage() {
     setMessage("Saving consent preference...");
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/preferences/${userId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ proactiveNudgesConsent: nextValue }),
-      });
+      const preferences = await withSession((activeSession) =>
+        apiRequest("/api/preferences", {
+          method: "PUT",
+          body: { proactiveNudgesConsent: nextValue },
+          token: activeSession.token,
+        })
+      );
 
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error("Could not save preference");
-      }
-
+      setConsent(Boolean(preferences.proactiveNudgesConsent));
       setStatus("done");
       setMessage("Consent preference updated.");
     } catch (error) {
-      console.error("Failed to update preferences", error);
+      setConsent(!nextValue);
       setStatus("error");
-      setMessage("Could not update preference. Please try again.");
+      setMessage(error.message);
     }
   }
 
@@ -59,28 +65,23 @@ function SettingsPage() {
     setMessage("Preparing your data export...");
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/user-data/${userId}/export`);
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error("Could not export user data");
-      }
+      const exported = await withSession((activeSession) =>
+        apiRequest("/api/user-data/export", { token: activeSession.token })
+      );
 
-      const blob = new Blob([JSON.stringify(result.data, null, 2)], {
-        type: "application/json",
-      });
+      const blob = new Blob([JSON.stringify(exported, null, 2)], { type: "application/json" });
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `saarthi-data-${userId}.json`;
+      link.download = `saarthi-data-${exported.userId}.json`;
       link.click();
       URL.revokeObjectURL(downloadUrl);
 
       setStatus("done");
       setMessage("Data export downloaded.");
     } catch (error) {
-      console.error("Failed to export data", error);
       setStatus("error");
-      setMessage("Data export failed. Please try again.");
+      setMessage(error.message);
     }
   }
 
@@ -88,27 +89,27 @@ function SettingsPage() {
     const confirmed = window.confirm(
       "This will permanently delete your Saarthi data. This action cannot be undone. Continue?"
     );
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     setStatus("saving");
     setMessage("Deleting your data...");
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/user-data/${userId}`, {
-        method: "DELETE",
-      });
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error("Could not delete user data");
-      }
+      await withSession((activeSession) =>
+        apiRequest("/api/user-data", { method: "DELETE", token: activeSession.token })
+      );
 
+      // The deleted identity must not keep being reused, so the next visit
+      // starts from a freshly minted session.
+      clearSession();
       setConsent(false);
       setStatus("done");
-      setMessage("Your data has been deleted.");
+      setMessage("Your data has been deleted. A new anonymous session will start on your next chat.");
     } catch (error) {
-      console.error("Failed to delete user data", error);
       setStatus("error");
-      setMessage("Delete failed. Please try again.");
+      setMessage(error.message);
     }
   }
 
@@ -116,9 +117,8 @@ function SettingsPage() {
     <section className="card settings-page">
       <p className="label">Profile / Settings</p>
       <h2>Personalization and consent controls</h2>
-      <p>
-        Manage reminder consent and privacy controls for your Saarthi account.
-      </p>
+      <p>Manage reminder consent and privacy controls for your Saarthi account.</p>
+      {session ? <p className="score">Anonymous session: {session.userId}</p> : null}
 
       <div className="setting-row">
         <label htmlFor="consent-toggle">Allow proactive reminder nudges</label>
@@ -127,19 +127,24 @@ function SettingsPage() {
           type="checkbox"
           checked={consent}
           onChange={handleConsentChange}
+          disabled={status === "saving"}
         />
       </div>
 
       <div className="setting-actions">
-        <button type="button" className="ghost-button" onClick={handleExport}>
+        <button type="button" className="ghost-button" onClick={handleExport} disabled={status === "saving"}>
           Export My Data
         </button>
-        <button type="button" className="danger-button" onClick={handleDelete}>
+        <button type="button" className="danger-button" onClick={handleDelete} disabled={status === "saving"}>
           Delete My Data
         </button>
       </div>
 
-      {status !== "idle" ? <p className={`hint ${status === "error" ? "error-text" : ""}`}>{message}</p> : null}
+      {status !== "idle" ? (
+        <p className={`hint ${status === "error" ? "error-text" : ""}`} role="status">
+          {message}
+        </p>
+      ) : null}
     </section>
   );
 }

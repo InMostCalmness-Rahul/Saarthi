@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
+import { getMongoUri } from './env.js';
+import { logger } from '../utils/logger.js';
 
 export async function connectDB() {
-  const mongoUri = process.env.MONGODB_URI;
+  const mongoUri = getMongoUri();
 
   if (!mongoUri) {
     throw new Error('MONGODB_URI is not set in environment variables');
@@ -11,9 +13,11 @@ export async function connectDB() {
     await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000,
     });
-    console.log('MongoDB connected successfully');
+    logger.info('MongoDB connected successfully');
   } catch (error) {
-    console.error('MongoDB connection failed:', error.message);
+    // Logged through the redacting logger so connection strings cannot leak.
+    logger.error('MongoDB connection failed', error);
     throw error;
   }
 }
+

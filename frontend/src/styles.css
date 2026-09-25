@@ -372,6 +372,88 @@ p {
   clip: rect(0, 0, 0, 0);
 }
 
+/* --- Safety, notices and tiny-action controls --- */
+.crisis-panel {
+  margin: 1rem 1rem 0;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid #e0a8a8;
+  background: #fff4f4;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.crisis-panel h3 {
+  font-family: "Outfit", sans-serif;
+  color: #8f2b2b;
+  font-size: 1.05rem;
+}
+
+.crisis-panel p,
+.crisis-panel li {
+  color: #7d2d2d;
+  line-height: 1.5;
+  font-size: 0.93rem;
+}
+
+.crisis-panel ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.notice {
+  margin: 1rem 1rem 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: #eef6f4;
+  border: 1px solid #c6ded7;
+  color: var(--primary-strong);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.notice.error-text {
+  background: #fff6f6;
+  border-color: #e3b2b2;
+}
+
+.bubble.crisis {
+  background: #fff4f4;
+  border-color: #e0a8a8;
+}
+
+.bubble-flag {
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: #8f2b2b;
+}
+
+.tiny-action {
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px dashed #c6ded7;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.tiny-action-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.tiny-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tiny-action-buttons .ghost-button {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.8rem;
+}
+
 @media (max-width: 920px) {
   .chat-page {
     grid-template-columns: 1fr;

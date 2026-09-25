@@ -8,6 +8,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "lint": "eslint .",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "test:smoke-chat": "node scripts/smokeChat.js",
     "test:e2e-chat": "node scripts/e2eChatFlow.js"
   },
   "keywords": [
@@ -18,12 +20,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "dotenv": "^16.3.1",
-    "cors": "^2.8.5",
-    "morgan": "^1.10.0",
     "axios": "^1.6.0",
-    "mongoose": "^8.12.1"
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "helmet": "^8.3.0",
+    "mongoose": "^8.12.1",
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
     "eslint": "^8.54.0"

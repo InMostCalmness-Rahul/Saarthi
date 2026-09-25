@@ -1,6 +1,13 @@
 import MessageBubble from "./MessageBubble";
 
-function ChatWindow({ messages, stateLabel, stateMessage }) {
+function ChatWindow({
+  messages,
+  stateLabel,
+  stateMessage,
+  pendingActionId,
+  resolvedActions = {},
+  onActionDecision,
+}) {
   if (stateLabel === "loading") {
     return (
       <section className="state-panel" aria-live="polite">
@@ -31,7 +38,18 @@ function ChatWindow({ messages, stateLabel, stateMessage }) {
   return (
     <section className="chat-window" aria-live="polite">
       {messages.map((message) => (
-        <MessageBubble key={message.id} role={message.role} text={message.text} />
+        <MessageBubble
+          key={message.id}
+          role={message.role}
+          text={message.text}
+          tinyAction={message.tinyAction}
+          riskFlags={message.riskFlags}
+          actionState={resolvedActions[message.id]}
+          onActionDecision={
+            onActionDecision ? (completed) => onActionDecision(message, completed) : undefined
+          }
+          disabled={pendingActionId === message.id}
+        />
       ))}
     </section>
   );

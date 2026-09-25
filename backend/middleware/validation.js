@@ -1,99 +1,92 @@
-// Request validation middleware
+import { LIMITS, SESSION_ID_PATTERN } from '../config/constants.js';
+import { logger } from '../utils/logger.js';
+
+// Request validation middleware.
+// Note: user identity is intentionally NOT validated here — it comes from the
+// signed session token (see middleware/auth.js), never from client input.
+
+function validationError(res, message) {
+  return res.status(400).json({
+    success: false,
+    error: { status: 400, message },
+  });
+}
+
 export const requestValidator = (req, res, next) => {
-  // Log incoming request
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-  
-  // Check required headers for POST/PUT requests
-  if (['POST', 'PUT'].includes(req.method)) {
-    if (!req.is('application/json')) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          status: 400,
-          message: 'Content-Type must be application/json'
-        }
-      });
+  logger.debug(`incoming_request ${req.method} ${req.path}`);
+
+  // Reject JSON-ish methods that do not declare a JSON body.
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    const hasBody = req.headers['content-length'] && req.headers['content-length'] !== '0';
+    if (hasBody && !req.is('application/json')) {
+      return validationError(res, 'Content-Type must be application/json');
     }
   }
-  
-  next();
+
+  return next();
 };
 
-// Validation helpers
 export const validateChatMessage = (req, res, next) => {
-  const { message, userId } = req.body;
-  
+  const { message, sessionId } = req.body ?? {};
+
   if (!message || typeof message !== 'string' || message.trim().length === 0) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        status: 400,
-        message: 'Message is required and must be a non-empty string'
-      }
-    });
+    return validationError(res, 'Message is required and must be a non-empty string');
   }
-  
-  if (!userId || typeof userId !== 'string') {
-    return res.status(400).json({
-      success: false,
-      error: {
-        status: 400,
-        message: 'userId is required and must be a string'
-      }
-    });
+
+  if (message.length > LIMITS.MESSAGE_MAX_LENGTH) {
+    return validationError(
+      res,
+      `Message must be ${LIMITS.MESSAGE_MAX_LENGTH} characters or fewer`
+    );
   }
-  
-  next();
+
+  if (sessionId !== undefined && !SESSION_ID_PATTERN.test(sessionId)) {
+    return validationError(res, 'sessionId must match the format session_<id>');
+  }
+
+  return next();
 };
 
 export const validateActionUpdate = (req, res, next) => {
-  const { userId, actionCommitment, trustScoreDelta } = req.body;
-  
-  if (!userId || typeof userId !== 'string') {
-    return res.status(400).json({
-      success: false,
-      error: {
-        status: 400,
-        message: 'userId is required and must be a string'
-      }
-    });
-  }
-  
+  const { actionCommitment, completed, sessionId, trustScoreDelta } = req.body ?? {};
+
   if (!actionCommitment || typeof actionCommitment !== 'string') {
-    return res.status(400).json({
-      success: false,
-      error: {
-        status: 400,
-        message: 'actionCommitment is required and must be a string'
-      }
-    });
+    return validationError(res, 'actionCommitment is required and must be a string');
   }
-  
-  if (typeof trustScoreDelta !== 'number') {
-    return res.status(400).json({
-      success: false,
-      error: {
-        status: 400,
-        message: 'trustScoreDelta is required and must be a number'
-      }
-    });
+
+  if (actionCommitment.trim().length === 0 || actionCommitment.length > LIMITS.ACTION_MAX_LENGTH) {
+    return validationError(
+      res,
+      `actionCommitment must be between 1 and ${LIMITS.ACTION_MAX_LENGTH} characters`
+    );
   }
-  
-  next();
+
+  if (typeof completed !== 'boolean') {
+    return validationError(res, 'completed is required and must be a boolean');
+  }
+
+  // Trust deltas are server-authoritative: accepting one from a client would let
+  // any caller pin their own score to 0 or 100 in a single request.
+  if (trustScoreDelta !== undefined) {
+    return validationError(
+      res,
+      'trustScoreDelta must not be supplied by clients; the server derives it from `completed`'
+    );
+  }
+
+  if (sessionId !== undefined && sessionId !== null && !SESSION_ID_PATTERN.test(sessionId)) {
+    return validationError(res, 'sessionId must match the format session_<id>');
+  }
+
+  return next();
 };
 
 export const validatePreferencesUpdate = (req, res, next) => {
-  const { proactiveNudgesConsent } = req.body;
+  const { proactiveNudgesConsent } = req.body ?? {};
 
   if (typeof proactiveNudgesConsent !== 'boolean') {
-    return res.status(400).json({
-      success: false,
-      error: {
-        status: 400,
-        message: 'proactiveNudgesConsent is required and must be a boolean'
-      }
-    });
+    return validationError(res, 'proactiveNudgesConsent is required and must be a boolean');
   }
 
-  next();
+  return next();
 };

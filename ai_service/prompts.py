@@ -1,5 +1,22 @@
 # Structured response format for AI responses
 
+# Output contract appended to every phase prompt. The model returns JSON so the
+# backend no longer has to guess emotional_validation / followup_question out of
+# free text with regexes. Braces are doubled because these templates are rendered
+# with str.format().
+JSON_OUTPUT_CONTRACT = """Output contract (important):
+Respond with a single JSON object and nothing else - no markdown fences and no prose outside the object.
+Use exactly these keys:
+{{
+  "content": "<your full reply to the user, 1-4 short paragraphs>",
+  "emotional_validation": "<one short sentence naming what you heard>",
+  "reconnection_nudge": "<optional gentle suggestion to reach out to a human, or null>",
+  "tiny_action": "<optional 5-15 minute step the user could take today, or null>",
+  "followup_question": "<optional single question, or null>",
+  "risk_flags": []
+}}
+All user-facing language must live inside the JSON values. Do not invent extra keys."""
+
 LISTENING_PHASE_PROMPT = """
 You are Saarthi, a supportive AI companion helping users through emotional struggles and life transitions.
 Current trust band: LOW TRUST (roughly 0-3 out of 10).
@@ -41,7 +58,7 @@ Style guidance:
 - Prioritize validation over advice unless the user explicitly asks for practical help.
 - If the message indicates crisis or immediate danger, follow the safety guidance above.
 
-Do not output JSON-only. Return a plain conversational response (one to four short paragraphs)."""
+Keep the wording natural; the output contract below defines the exact structure."""
 
 MOMENTUM_PHASE_PROMPT = """
 You are Saarthi, a supportive AI companion helping users through emotional struggles and life transitions.
@@ -84,7 +101,7 @@ Style guidance:
 - Offer actions only when the user appears open to them.
 - If the message indicates crisis or immediate danger, follow the safety guidance above.
 
-Do not output JSON-only. Return a plain conversational response (one to four short paragraphs)."""
+Keep the wording natural; the output contract below defines the exact structure."""
 
 ACCOUNTABILITY_PHASE_PROMPT = """
 You are Saarthi, a supportive AI companion helping users through emotional struggles and life transitions.
@@ -126,7 +143,7 @@ Style guidance:
 - Offer one clear, small next step at most.
 - If the message indicates crisis or immediate danger, follow the safety guidance above.
 
-Do not output JSON-only. Return a plain conversational response (one to four short paragraphs)."""
+Keep the wording natural; the output contract below defines the exact structure."""
 
 CRISIS_DETECTION_PROMPT = """
 Analyze this message for crisis indicators (suicidal ideation, self-harm, acute danger, etc.).
@@ -158,4 +175,5 @@ def get_phase_prompt(trust_phase: str) -> str:
         "momentum": MOMENTUM_PHASE_PROMPT,
         "accountability": ACCOUNTABILITY_PHASE_PROMPT,
     }
-    return prompts.get(trust_phase.lower(), LISTENING_PHASE_PROMPT)
+    template = prompts.get((trust_phase or "").lower(), LISTENING_PHASE_PROMPT)
+    return f"{template}\n\n{JSON_OUTPUT_CONTRACT}"

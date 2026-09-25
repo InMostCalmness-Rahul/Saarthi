@@ -1,45 +1,46 @@
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import dotenv from 'dotenv';
-import chatRoutes from './routes/chatRoutes.js';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import { requestValidator } from './middleware/validation.js';
+import 'dotenv/config';
+import mongoose from 'mongoose';
+import { createApp } from './app.js';
 import { connectDB } from './config/db.js';
+import { assertServerEnv } from './config/env.js';
+import { logger } from './utils/logger.js';
 
-dotenv.config();
-
-const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(morgan('combined'));
-app.use(cors());
-app.use(express.json());
-app.use(requestValidator);
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'Saarthi backend' });
-});
-
-// Routes
-app.use('/api', chatRoutes);
-
-// Error handling
-app.use(notFoundHandler);
-app.use(errorHandler);
-
-// Start server
 async function startServer() {
   try {
-    await connectDB();
-    app.listen(PORT, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
-    });
+    // Fail fast on missing/insecure configuration instead of serving traffic.
+    assertServerEnv();
   } catch (error) {
-    console.error('Failed to start server:', error.message);
+    logger.error('Invalid server configuration', error);
     process.exit(1);
   }
+
+  try {
+    await connectDB();
+  } catch (error) {
+    logger.error('Failed to connect to MongoDB', error);
+    process.exit(1);
+  }
+
+  const app = createApp();
+  const server = app.listen(PORT, () => {
+    logger.info(`Server running at http://localhost:${PORT}`);
+  });
+
+  async function shutdown(signal) {
+    logger.info(`Received ${signal}, shutting down gracefully`);
+    server.close(async () => {
+      await mongoose.disconnect().catch(() => {});
+      process.exit(0);
+    });
+  }
+
+  ['SIGINT', 'SIGTERM'].forEach((signal) => {
+    process.on(signal, () => {
+      shutdown(signal);
+    });
+  });
 }
 
 startServer();
